@@ -1,11 +1,12 @@
 package com.anp.entity;
-import java.util.List;
 
-import java.util.Optional;
-import org.hibernate.HibernateException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 
 //the patientAPP class serves as the main entry point of the application
 //demonstrating the usage of patientDAO to interact with the database.
@@ -15,75 +16,74 @@ public class PatientAPP {
 // the main method demonstrating database interactions using patientDAO.
 	
 	public static void main(String[] args) {
-		
-		EntityManagerFactory factory = null;
-				
-				
-		try { 
-	//connecting to database using persistence unit "ak".				
-			factory  = Persistence.createEntityManagerFactory("ak");
-					
-			EntityManager em = factory.createEntityManager();
-								
-		System.out.println("------WELCOME TO PatientManagementSystem------");
-// creating instances of patient and adding them to the database.
-		
-PatientEntity P1 = new PatientEntity (1, "Sanvi", "shree", "Female","B-Positive",  "06-12-2023");
-PatientEntity P2 = new PatientEntity(2, "Akshay", "kumar", "Male","O-Positive",  "12-12-2023");
-PatientEntity P3 = new PatientEntity(3, "Sindhu", "sing", "Female","A-Negative", "20-12-2023");	
+        // Create an EntityManagerFactory
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ak");
+        EntityManager em = emf.createEntityManager();
 
-					PatientDAO tDAO = new PatientDAO(em);
-					tDAO.save(P1);
-					tDAO.save(P2);
-					tDAO.save(P3);
-					System.out.println("Data added successfully");
+        try {
+            // Patient operations
+            PatientDAO patientDAO = new PatientDAO(em);
 
-					System.out.println("--------------------------");
-//retrieving patient details based on ID and displaying them.
-					
-					System.out.println(" Patient  details based on the id :");
-					Optional<PatientEntity> PatientById = tDAO.findById(1);
-					System.out.println(PatientById);
-					 
-					
-					System.out.println("--------------------------");
-// retrieving details of all the books.	
-					System.out.println(" All Details of Patient ");	 
-					List<PatientEntity> alltr = tDAO.findAll();
-					System.out.println(alltr);
-					
-					
-					
-					System.out.println("------------------");
-				
-					
-					int  newid = 3;
-					String newFirstName ="Sindhu" ;
-					String newLastName = "sing" ;
-					String newgender = "Female"  ;
-					String newbloodGroup = "A-Negative";
-					String newAppointmentdate  ="20-12-2023";
-					
-tDAO.updatePatient(newid, newFirstName, newLastName,newgender, newbloodGroup, newAppointmentdate);
-					
-					System.out.println("Data updated sucessfully");
-					
-					
-					System.out.println("------------------"); 
-		//removing a record based on ID			
-					System.out.println("Removeing based on the id :");
-					
-					
-					
-					System.out.println("2nd record is removed");
-					
-					
-				}
-				catch (HibernateException e) {
-					 e.printStackTrace();
-				}
-				catch (Exception e) {
-				 e.printStackTrace();
-				}
-	           }
-              }
+            // Save a new patient
+            PatientEntity newPatient = new PatientEntity(0, "Akhila", "Akhi", "Female", "A+", "2024-01-20");
+            patientDAO.save(newPatient);
+
+            // Find and display a patient by ID
+            Optional<PatientEntity> foundPatient = patientDAO.findById(newPatient.getPatientId());
+            foundPatient.ifPresent(System.out::println);
+
+            // Update the patient's information
+            patientDAO.updatePatient(newPatient.getPatientId(), "Keerthana", "Sweety", "Female", "B+", "2024-01-21");
+
+            // Display all patients
+            List<PatientEntity> allPatients = patientDAO.findAll();
+            allPatients.forEach(System.out::println);
+
+            // Doctor operations
+            DoctorDAO doctorDAO = new DoctorDAO(em);
+
+            // Save a new doctor
+            DoctorEntity newDoctor = new DoctorEntity(0, "Dr. Akhi", null);
+            doctorDAO.save(newDoctor);
+
+            // Find and display a doctor by ID
+            Optional<DoctorEntity> foundDoctor = doctorDAO.findById(newDoctor.getDoctorId());
+            foundDoctor.ifPresent(System.out::println);
+
+            // Update the doctor's information
+            doctorDAO.updateDoctor(newDoctor.getDoctorId(), "Dr. Harsha");
+
+            // Display all doctors
+            List<DoctorEntity> allDoctors = doctorDAO.findAll();
+            allDoctors.forEach(System.out::println);
+
+            // Appointment operations
+            AppointmentDAO appointmentDAO = new AppointmentDAO(em);
+
+            // Save a new appointment
+            AppointmentEntity newAppointment = new AppointmentEntity(0, newPatient, newDoctor, LocalDateTime.now());
+            appointmentDAO.save(newAppointment);
+
+            // Find and display an appointment by ID
+            Optional<AppointmentEntity> foundAppointment = appointmentDAO.findById(newAppointment.getAppointmentId());
+            foundAppointment.ifPresent(System.out::println);
+
+            // Update the appointment's information
+            appointmentDAO.updateAppointment(newAppointment.getAppointmentId(), LocalDateTime.now().plusHours(1));
+
+            // Display all appointments
+            List<AppointmentEntity> allAppointments = appointmentDAO.findAll();
+            allAppointments.forEach(System.out::println);
+
+        } finally {
+            // Close the EntityManager and EntityManagerFactory
+            if (em != null && em.isOpen()) {
+                em.close();
+            }
+            if (emf != null && emf.isOpen()) {
+                emf.close();
+            }
+        }
+    }
+}
+
